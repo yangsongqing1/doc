@@ -1,0 +1,43 @@
+Ubuntu上安装和使用RabbitMQ
+
+1. 安装RabbitMQ服务软件包
+
+输入以下命令进行安装
+
+#apt install rabbitmq-server
+
+ 
+
+2.安装完成后在rabbitMQ中添加用户
+
+命令：#rabbitmqctl add_user username password
+
+将用户设置为管理员（只有管理员才能远程登录）
+
+命令：#rabbitmqctl set_user_tags username administrator
+
+同时为用户设置读写等权限
+
+命令：#rabbitmqctl set_permissions -p / username ".*" ".*" ".*"
+
+ 
+
+3.安装RabbitMQ监控管理插件进行RabbitMQ的管理
+
+命令：#rabbitmq-plugins enable rabbitmq_management
+
+插件rabbitmq_management启动成功后就可以通过web页面进行RabbitMQ的监控和管理
+
+ 
+
+4.使用rabbitmq_management插件进行监控和管理
+
+使用firefox浏览器登录：http://localhost:15672
+
+在登录页面使用 guest/guest用户名和密码登录RabbitMQ管理系统，在系统中可以对RabbitMQ服务进行channel,queue,用户等的管理
+
+ 
+
+PS:Guest账号不能远程登录。
+
+如果还不能远程访问或远程登录检查是不是5672, 15672端口没有开放！！！！！！
