@@ -21,7 +21,7 @@ output {
   elasticsearch {
     action => "index"          #The operation on ES
     hosts  => "192.168.226.133:9200"   #ElasticSearch host, can be array.
-    index  => "applog"         #The index to write data to.
+    index  => "applog"         #在kibana里用这个index.
   }
 }
 3.启动 ./logstash -f logstash.conf
