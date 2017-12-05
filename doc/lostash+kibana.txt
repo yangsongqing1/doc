@@ -1,0 +1,35 @@
+logstash安装：
+1.下载解压
+2.配置文件
+# For detail structure of this file
+# Set: https://www.elastic.co/guide/en/logstash/current/configuration-file-structure.html
+input {
+  # For detail config for log4j as input, 
+  # See: https://www.elastic.co/guide/en/logstash/current/plugins-inputs-log4j.html
+  tcp {
+    mode => "server"
+    host => "192.168.226.133"
+    port => 9250
+  }
+}
+filter {
+  #Only matched data are send to output.
+}
+output {
+  # For detail config for elasticsearch as output, 
+  # See: https://www.elastic.co/guide/en/logstash/current/plugins-outputs-elasticsearch.html
+  elasticsearch {
+    action => "index"          #The operation on ES
+    hosts  => "192.168.226.133:9200"   #ElasticSearch host, can be array.
+    index  => "applog"         #The index to write data to.
+  }
+}
+3.启动 ./logstash -f logstash.conf
+
+
+kibana安装
+1.下载解压
+2.vim config/kibana.yml 修改
+elasticsearch.url: "http://10.10.8.67:9200"
+server.host: 0.0.0.0 #可以通过ip访问
+3.访问ip:端口 用户名密码默认elastic/changeme

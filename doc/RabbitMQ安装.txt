@@ -1,4 +1,4 @@
-Ubuntu上安装和使用RabbitMQ
+﻿Ubuntu上安装和使用RabbitMQ
 
 1. 安装RabbitMQ服务软件包
 
@@ -29,8 +29,11 @@ Ubuntu上安装和使用RabbitMQ
 插件rabbitmq_management启动成功后就可以通过web页面进行RabbitMQ的监控和管理
 
  
+4.启动RabbitMQ Server
+/etc/init.d/rabbitmq-serverstart  
+或service rabbitmq-service start 
 
-4.使用rabbitmq_management插件进行监控和管理
+5.使用rabbitmq_management插件进行监控和管理
 
 使用firefox浏览器登录：http://localhost:15672
 
