@@ -30,7 +30,7 @@
 
  
 4.启动RabbitMQ Server
-/etc/init.d/rabbitmq-serverstart  
+/etc/init.d/rabbitmq-server start  
 或service rabbitmq-service start 
 
 5.使用rabbitmq_management插件进行监控和管理
