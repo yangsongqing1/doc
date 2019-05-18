@@ -1,0 +1,140 @@
+集群部署(采用2个master，2个slave异步复制的集群结构)
+第一步：
+关闭2台机器的iptables和selinux（所有节点机器上都要操作）
+[root@master01 ~]# /etc/init.d/iptables stop
+[root@master01 ~]# vim /etc/sysconfig/selinux
+......
+SELINUX=disabled
+[root@master01 ~]# setenforce 0
+[root@master01 ~]# getenforce
+Permissive
+
+第二步：linux上准备好jdk，配置好环境变量，还有安装包maven
+第三步：去RocketMQ官网下载二进制文件解压
+第四步：接下来先建好目录,进入 rocketmq目录，mkdir -p data/store/{commitlog,consumequeue,index,checkpoint,abort} data2/store/{commitlog2,consumequeue2,index2,checkpoint2,abort2} logs 文件夹建好
+第五步：把启动脚本的参数改下：
+  vim runbroker.sh   -server -Xms512m -Xmx512m -Xmn256m
+  vim runserver.sh   -server -Xms512m -Xmx512m -Xmn126m -XX:PermSize=128m -XX:MaxPermSize=320m
+  vim tools.sh       -server -Xms256m -Xmx256m -Xmn128m -XX:PermSize=128m -XX:MaxPermSize=128m
+第六步：到rocketmq/conf/2m-2s-async 下 修改这四个文件
+第一台机器上主要 broker-a.properties  broker-b-s.properties两个文件 内容分别如下
+	brokerClusterName=RocketMQCluster
+	brokerName=broker-a
+	#主节点
+	brokerId=0
+	brokerRole=ASYNC_MASTER
+	flushDiskType=ASYNC_FLUSH
+	##Broker 对外服务的监听端口
+	listenPort=10911
+	#nameserver地址，分号分割
+	namesrvAddr=192.168.1.128:9876;192.168.1.129:9876
+	#在发送消息时，自动创建服务器不存在的topic，默认创建的队列数
+	defaultTopicQueueNums=4
+	#是否允许 Broker 自动创建Topic，建议线下开启，线上关闭
+	autoCreateTopicEnable=true
+	#是否允许 Broker 自动创建订阅组，建议线下开启，线上关闭
+	autoCreateSubscriptionGroup=true
+
+	brokerIP1=192.168.1.128
+	storePathRootDir=/usr/local/rocketmq/data/store
+	storePathCommitLog=/usr/local/rocketmq/data/store/commitlog
+	# 消费队列存储路径存储路径
+	storePathConsumerQueue=/usr/local/rocketmq/data/store/consumequeue
+	#消息索引存储路径
+	storePathIndex=/usr/local/rocketmq/data/store/index
+	#checkpoint 文件存储路径
+	storeCheckpoint=/usr/local/rocketmq/data/store/checkpoint
+	#abort 文件存储路径
+	abortFile=/usr/local/rocketmq/data/store/abort
+
+	#删除文件时间点，默认凌晨 4点
+	deleteWhen=04
+	#文件保留时间，默认 48 小时
+	fileReservedTime=120
+	# commitLog每个文件的大小默认1G
+	mapedFileSizeCommitLog=1073741824
+	#ConsumeQueue每个文件默认存30W条，根据业务情况调整
+	mapedFileSizeConsumeQueue=300000
+	#destroyMapedFileIntervalForcibly=120000
+	#redeleteHangedFileInterval=120000
+	#检测物理文件磁盘空间
+	#diskMaxUsedSpaceRatio=88
+	
+	
+	###############################################################################
+	brokerClusterName=RocketMQCluster
+	brokerName=broker-b
+	#从节点
+	brokerId=1
+	brokerRole=SLAVE
+	flushDiskType=ASYNC_FLUSH
+	listenPort=10921
+	#nameserver地址，分号分割
+	namesrvAddr=192.168.1.128:9876;192.168.1.129:9876
+	brokerIP1=192.168.1.128
+	#在发送消息时，自动创建服务器不存在的topic，默认创建的队列数
+	defaultTopicQueueNums=4
+	#是否允许 Broker 自动创建Topic，建议线下开启，线上关闭
+	autoCreateTopicEnable=true
+	#是否允许 Broker 自动创建订阅组，建议线下开启，线上关闭
+	autoCreateSubscriptionGroup=true
+
+	storePathRootDir=/usr/local/rocketmq/data2/store
+	storePathCommitLog=/usr/local/rocketmq/data2/store/commitlog2
+	# 消费队列存储路径存储路径
+	storePathConsumerQueue=/usr/local/rocketmq/data2/store/consumequeue2
+	#消息索引存储路径
+	storePathIndex=/usr/local/rocketmq/data2/store/index2
+	#checkpoint 文件存储路径
+	storeCheckpoint=/usr/local/rocketmq/store/checkpoint2
+	#abort 文件存储路径
+	abortFile=/usr/local/rocketmq/data2/store/abort2
+
+	#删除文件时间点，默认凌晨 4点
+	deleteWhen=04
+	#文件保留时间，默认 48 小时
+	fileReservedTime=120
+	# commitLog每个文件的大小默认1G
+	mapedFileSizeCommitLog=1073741824
+	#ConsumeQueue每个文件默认存30W条，根据业务情况调整
+	mapedFileSizeConsumeQueue=300000
+	#destroyMapedFileIntervalForcibly=120000
+	#redeleteHangedFileInterval=120000
+	#检测物理文件磁盘空间
+	#diskMaxUsedSpaceRatio=88
+	
+第二机器上只修改 broker-b.properties 和broker-a-s.properties
+同样的配置修改brokerName brokerIP1就可以了
+
+最后启动
+两台机 上都执行
+bin目录下执行启动nameServer  
+nohup sh bin/mqnamesrv > ./logs/namesrvrun.log 2>&1 &
+
+
+第一台 启动master
+nohup sh bin/mqbroker -c conf/2m-2s-async/broker-a.properties -n"192.168.1.128:9876;192.168.1.129:9876" > ./logs/broker-a.log 2>&1 &
+
+
+第二台 启动master
+nohup sh bin/mqbroker -c conf/2m-2s-async/broker-b.properties -n"192.168.1.128:9876;192.168.1.129:9876" > ./logs/broker-b.log 2>&1 &
+
+第一台 启动slave 
+nohup sh bin/mqbroker -c conf/2m-2s-async/broker-b-s.properties -n"192.168.1.128:9876;192.168.1.129:9876" > ./logs/broker-b-s.log 2>&1 &
+
+
+第二台 启动slave 
+nohup sh bin/mqbroker -c conf/2m-2s-async/broker-a-s.properties -n"192.168.1.128:9876;192.168.1.129:9876" > ./logs/broker-a-s.log 2>&1 &
+
+
+rocketMq监控平台rocketmq-console部署
+
+git clone https://github.com/apache/rocketmq-externals.git
+	vim rocketmq-externals/rocketmq-console/src/main/resources/application.properties
+	修改namesrvAddr
+
+打包rocketmq-externals/rocketmq-console/
+	mvn clean package -Dmaven.test.skip=true
+	找到rocketmq-console-ng-1.0.0.jar
+	启动nohup java -jar target/rocketmq-console-ng-1.0.0.jar >/dev/null 2>&1 &
+	http://192.168.1.128:8080
