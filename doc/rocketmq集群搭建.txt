@@ -136,5 +136,5 @@ git clone https://github.com/apache/rocketmq-externals.git
 打包rocketmq-externals/rocketmq-console/
 	mvn clean package -Dmaven.test.skip=true
 	找到rocketmq-console-ng-1.0.0.jar
-	启动nohup java -jar target/rocketmq-console-ng-1.0.0.jar >/dev/null 2>&1 &
+	启动nohup java -jar rocketmq-console-ng-1.0.1.jar >/dev/null 2>&1 &
 	http://192.168.1.128:8080
